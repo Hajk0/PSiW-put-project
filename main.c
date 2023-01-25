@@ -2,27 +2,105 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#define REP_SIZE 100
-#define PRODUCERS_A 1
-#define PRODUCERS_B 1
-#define CONSUMERS 1
+#define REP_SIZE 1000
+#define PRODUCTS 100000
+#define PRODUCERS_A 5
+#define PRODUCERS_B 5
+#define CONSUMERS 10
 
 pthread_mutex_t lock;
-pthread_cond_t full, lackOfA, lackOfB;
+pthread_cond_t full, lackOfA, lackOfB, lackOfA2, lackOfB2;
 
 char repository[REP_SIZE];
 int firstEmpty = 0, produced = 0;
 int aAmount = 0, bAmount = 0;
 
 
+void *producerA(void *arg)
+{
+    char product = 'a';
+
+    for (int i = 0; i < PRODUCTS; i++)
+    {
+        pthread_mutex_lock(&lock);
+        
+        int wait = 1;
+        while (wait)
+        {
+            wait = 0;
+            while (firstEmpty == REP_SIZE)
+            {
+                pthread_cond_wait(&full, &lock);
+                wait = 1;
+            }
+            while (aAmount == REP_SIZE - 1)
+            {
+                pthread_cond_wait(&lackOfB, &lock);
+                wait = 1;
+            }
+            
+        }
+        repository[firstEmpty] = product; // dodanie do magazynu
+        firstEmpty++;
+        printf("Komponent a dodany.\t");
+
+        aAmount++;
+        printf("%d %d\n", aAmount, bAmount);
+
+        pthread_cond_signal(&lackOfA);  // budzenie konsumenta jesli brak a
+        pthread_mutex_unlock(&lock);
+    }
+    
+    return NULL;
+}
+
+void *producerB(void *arg)
+{
+    char product = 'b';
+
+    for (int i = 0; i < PRODUCTS; i++)
+    {
+        pthread_mutex_lock(&lock);
+        
+        int wait = 1;
+        while (wait)
+        {
+            wait = 0;
+            while (firstEmpty == REP_SIZE)
+            {
+                pthread_cond_wait(&full, &lock);
+                wait = 1;
+            }
+            while (bAmount == REP_SIZE - 1)
+            {
+                pthread_cond_wait(&lackOfA, &lock);
+                wait = 1;
+            }
+            
+        }
+        repository[firstEmpty] = product; // dodanie do magazynu
+        firstEmpty++;
+        printf("Komponent a dodany.\t");
+
+        bAmount++;
+        printf("%d %d\n", aAmount, bAmount);
+
+        pthread_cond_signal(&lackOfB);  // budzenie konsumenta jesli brak a
+        pthread_mutex_unlock(&lock);
+    }
+    
+    return NULL;
+}
+
 void *producer(void *arg)
 {
     char product = *((char *)arg);
 
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < PRODUCTS; i++)
     {
+        //printf("PROD");
         pthread_mutex_lock(&lock);
-
+        //printf("PROD");
         int wait = 1;
         while (wait) // petla aby po warunkowym przelaczeniu kontekstu ponownie sprawdzic wszystkie warunki
         {
@@ -34,12 +112,12 @@ void *producer(void *arg)
             }
             while (product == 'a' && aAmount == REP_SIZE - 1)   // sprawdzenie czy nie zapelnimy magazynu jednym komponentem
             {
-                pthread_cond_wait(&lackOfB, &lock);
+                pthread_cond_wait(&lackOfB2, &lock);
                 wait = 1;
             }
             while (product == 'b' && bAmount == REP_SIZE - 1)   // -||-
             {
-                pthread_cond_wait(&lackOfA, &lock);
+                pthread_cond_wait(&lackOfA2, &lock);
                 wait = 1;
             }
 
@@ -53,12 +131,14 @@ void *producer(void *arg)
         {
             aAmount++;
             printf("%d %d\n", aAmount, bAmount);
+            pthread_cond_signal(&lackOfA2);
             pthread_cond_signal(&lackOfA);  // budzenie konsumenta jesli brak a
         }
         else
         {
             bAmount++;
             printf("%d %d\n", aAmount, bAmount);
+            pthread_cond_signal(&lackOfB2);
             pthread_cond_signal(&lackOfB);  // budzenie konsumenta jesli brak b
         }
         
@@ -71,18 +151,25 @@ void *producer(void *arg)
 
 void *consumer(void *arg)
 {
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < PRODUCTS; i++)
     {
-        int j = 0, a = 0, b = 0;
+        //printf("CONS");
         pthread_mutex_lock(&lock);
-        
-        while (!aAmount)///
+        //printf("CONS");
+        int wait = 1;
+        while (wait)
         {
-            pthread_cond_wait(&lackOfA, &lock); // czekanie na dodanie komponentu a
-        }
-        while (!bAmount)///
-        {
-            pthread_cond_wait(&lackOfB, &lock); // czekanie na dodanie komponentu b
+            wait = 0;
+            while (!aAmount)///
+            {
+                pthread_cond_wait(&lackOfA, &lock); // czekanie na dodanie komponentu a
+                wait = 1;
+            }
+            while (!bAmount)///
+            {
+                pthread_cond_wait(&lackOfB, &lock); // czekanie na dodanie komponentu b
+                wait = 1;
+            }
         }
         
         int k = 2;                              // 2 bo ostatni item firstEmpty - 1
@@ -135,6 +222,8 @@ int main(int argc, char **argv)
     pthread_cond_init(&full, NULL);
     pthread_cond_init(&lackOfA, NULL);
     pthread_cond_init(&lackOfB, NULL);
+    pthread_cond_init(&lackOfA2, NULL);
+    pthread_cond_init(&lackOfB2, NULL);
 
     char a = 'a', b = 'b';
     for (int i = 0; i < REP_SIZE; i++)
@@ -145,11 +234,11 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < PRODUCERS_A; i++)
     {
-        pthread_create(&producersA[i], NULL, producer, &a);
+        pthread_create(&producersA[i], NULL, producerA, NULL);
     }
     for (int i = 0; i < PRODUCERS_B; i++)
     {
-        pthread_create(&producersB[i], NULL, producer, &b);
+        pthread_create(&producersB[i], NULL, producerB, NULL);
     }
     for (int i = 0; i < CONSUMERS; i++)
     {
