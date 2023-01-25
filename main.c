@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#define REP_SIZE 10000
+#define REP_SIZE 100
 #define PRODUCERS_A 1
 #define PRODUCERS_B 1
 #define CONSUMERS 1
@@ -23,23 +23,43 @@ void *producer(void *arg)
     {
         pthread_mutex_lock(&lock);
 
-        while (firstEmpty == REP_SIZE)  // sprawdzanie czy magazyn jest pelny
+        int wait = 1;
+        while (wait) // petla aby po warunkowym przelaczeniu kontekstu ponownie sprawdzic wszystkie warunki
         {
-            pthread_cond_wait(&full, &lock);    // czekanie na pobranie komponentow
+            wait = 0;
+            while (firstEmpty == REP_SIZE)  // sprawdzanie czy magazyn jest pelny
+            {
+                pthread_cond_wait(&full, &lock);    // czekanie na pobranie komponentow
+                wait = 1;
+            }
+            while (product == 'a' && aAmount == REP_SIZE - 1)   // sprawdzenie czy nie zapelnimy magazynu jednym komponentem
+            {
+                pthread_cond_wait(&lackOfB, &lock);
+                wait = 1;
+            }
+            while (product == 'b' && bAmount == REP_SIZE - 1)   // -||-
+            {
+                pthread_cond_wait(&lackOfA, &lock);
+                wait = 1;
+            }
+
         }
+
         repository[firstEmpty] = product; // dodanie do magazynu
         firstEmpty++;
-        printf("Komponent %c dodany.\n", product);
+        printf("Komponent %c dodany.\t", product);
 
         if (product == 'a')
         {
-            pthread_cond_signal(&lackOfA);  // budzenie konsumenta jesli brak a
             aAmount++;
+            printf("%d %d\n", aAmount, bAmount);
+            pthread_cond_signal(&lackOfA);  // budzenie konsumenta jesli brak a
         }
         else
         {
-            pthread_cond_signal(&lackOfB);  // budzenie konsumenta jesli brak b
             bAmount++;
+            printf("%d %d\n", aAmount, bAmount);
+            pthread_cond_signal(&lackOfB);  // budzenie konsumenta jesli brak b
         }
         
         pthread_mutex_unlock(&lock);
@@ -55,50 +75,14 @@ void *consumer(void *arg)
     {
         int j = 0, a = 0, b = 0;
         pthread_mutex_lock(&lock);
-
-        while ((!a || !b) && j < firstEmpty)    // sprawdzanie czy w magazynie są oba komponenty
-        {
-            if (repository[j] == 'a')
-            {
-                a = 1;
-            }
-            else if (repository[j] == 'b')
-            {
-                b = 1;
-            }
-            j++;
-        }
         
-        while (!a)
+        while (!aAmount)///
         {
             pthread_cond_wait(&lackOfA, &lock); // czekanie na dodanie komponentu a
-
-            j = 0;
-            while (j < firstEmpty)
-            {
-                if (repository[j] == 'a')
-                {
-                    a = 1;
-                    break;
-                }
-                j++;
-            }
-            
         }
-        while (!b)
+        while (!bAmount)///
         {
             pthread_cond_wait(&lackOfB, &lock); // czekanie na dodanie komponentu b
-
-            j = 0;
-            while (j < firstEmpty)
-            {
-                if (repository[j] == 'b')
-                {
-                    b = 1;
-                    break;
-                }
-                j++;
-            }
         }
         
         int k = 2;                              // 2 bo ostatni item firstEmpty - 1
@@ -132,6 +116,8 @@ void *consumer(void *arg)
         }
         
         firstEmpty -= 2;
+        aAmount--;
+        bAmount--;
         produced++;
         printf("Wyprodukowano kolejny produkt, laczna liczba wyprodukowanych: %d\n", produced);
         pthread_cond_signal(&full);             // budzenie producenta jesli magazyn byl pelen
@@ -146,6 +132,9 @@ int main(int argc, char **argv)
 {
     pthread_t producersA[PRODUCERS_A], producersB[PRODUCERS_B], consumers[CONSUMERS];
     pthread_mutex_init(&lock, NULL);
+    pthread_cond_init(&full, NULL);
+    pthread_cond_init(&lackOfA, NULL);
+    pthread_cond_init(&lackOfB, NULL);
 
     char a = 'a', b = 'b';
     for (int i = 0; i < REP_SIZE; i++)
@@ -183,6 +172,9 @@ int main(int argc, char **argv)
 
 
     pthread_mutex_destroy(&lock);
+    pthread_cond_destroy(&lackOfA);
+    pthread_cond_destroy(&lackOfB);
+    pthread_cond_destroy(&full);
 
 
     return 0;
