@@ -1,10 +1,11 @@
-Montownia
+Montownia (wersja rozszerzona)
 
 W montowni, na pojedynczym stanowisku, wykonywana jest prosta operacja złożenia produktu końcowego, którego główne komponenty A i B dostarczane są przez
 dwóch niezależnych dostawców. Komponenty składowe A i B trafiają do magazynu,
 który może pomieścić w sumie N komponentów. Dostawcy w dowolnym momencie
 dostarczają komponenty, a ich obiór może być wstrzymany gdy magazyn będzie wypełniony. Montaż polega na: pobraniu z magazynu pojedynczej sztuki komponentu A,
 pobraniu pojedynczej sztuki komponentu B i złożeniu ich w produkt końcowy.
+
 
 Działanie algorytmu:
 - inicjacja wszystkich potrzebnych semaforów zmiennych warunkowych oraz magazynu
@@ -30,3 +31,13 @@ Działanie algorytmu:
 
 - synchronizacja wątków
 - usunięcie semaforów i zmiennych warunkowych
+
+
+Personalizacja działania:
+- Można personalizować działanie programu przez zmianę stałych 
+- - REP_SIZE - rozmiar magazynu, 
+- - PRODUCTS - liczba dodawanych produktów przez jednego producenta oraz liczba tworzonych produktów przez montownie,
+- - PRODUCERS_A - liczba producentów produktu a,
+- - PRODUCERS_B - liczba producentów produktu b,
+- - CONSUMERS - liczba stanowisk montażu,
+(zaleca się podanie tej samej liczby trzech ostatnich stałych aby program wykonał się do końca, w przeciwnym wypadku konsument będzie czekał na komponenty których nie dostanie lub producent będzie czekał na wyczyszczenie magazynu którego nie będzie miał kto wyczyścić)
