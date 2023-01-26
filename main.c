@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#define REP_SIZE 1000
-#define PRODUCTS 100000
+#define REP_SIZE 100
+#define PRODUCTS 1000
 #define PRODUCERS_A 5
 #define PRODUCERS_B 5
-#define CONSUMERS 10
+#define CONSUMERS 5
 
 pthread_mutex_t lock;
 pthread_cond_t full, lackOfA, lackOfB, lackOfA2, lackOfB2;
@@ -33,7 +33,7 @@ void *producerA(void *arg)
                 pthread_cond_wait(&full, &lock);
                 wait = 1;
             }
-            while (aAmount == REP_SIZE - 1)
+            while (aAmount >= REP_SIZE - 0.05 * REP_SIZE)
             {
                 pthread_cond_wait(&lackOfB, &lock);
                 wait = 1;
@@ -71,7 +71,7 @@ void *producerB(void *arg)
                 pthread_cond_wait(&full, &lock);
                 wait = 1;
             }
-            while (bAmount == REP_SIZE - 1)
+            while (bAmount >= REP_SIZE - 0.05 * REP_SIZE)
             {
                 pthread_cond_wait(&lackOfA, &lock);
                 wait = 1;
@@ -264,6 +264,8 @@ int main(int argc, char **argv)
     pthread_cond_destroy(&lackOfA);
     pthread_cond_destroy(&lackOfB);
     pthread_cond_destroy(&full);
+    pthread_cond_destroy(&lackOfA2);
+    pthread_cond_destroy(&lackOfB2);
 
 
     return 0;
