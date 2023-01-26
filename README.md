@@ -17,13 +17,13 @@ wszystkie one mogą pracować jednocześnie.
 - usunięcie semaforów i zmiennych warunkowych
 
 ### działanie funkcji producenta:
-- - wejście do pętli odpowiadającej za wytworzenie odpowiedniej ilości komponentów
-- - opuszczenie semafora
-- - sprawdzenie czy magazyn jest pełny, jeśli tak oczekiwanie na konsumenta
-- - sprawdzenie czy magazyn nie zostanie zapełniony jednym komponentem, jeśli magazyn jest wypełniony jednym komponentem przynajmniej w 95% następuje oczekiwanie na dodanie drugiego typu komponentu
-- - dodanie komponentu do magazynu
-- - wysłanie sygnału o dodaniu komponentu
-- - podniesienie semafora
+- wejście do pętli odpowiadającej za wytworzenie odpowiedniej ilości komponentów
+- opuszczenie semafora
+- sprawdzenie czy magazyn jest pełny, jeśli tak oczekiwanie na konsumenta
+- sprawdzenie czy magazyn nie zostanie zapełniony jednym komponentem, jeśli magazyn jest wypełniony jednym komponentem przynajmniej w 95% następuje oczekiwanie na dodanie drugiego typu komponentu
+- dodanie komponentu do magazynu
+- wysłanie sygnału o dodaniu komponentu
+- podniesienie semafora
 
 ### działanie funkcji konsumenta:
 - wejście do pętli odpowiadającej za złożenie odpowiedniej ilości komponentów
