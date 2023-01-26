@@ -11,7 +11,7 @@ wszystkie one mogą pracować jednocześnie.
 
 
 ## Działanie algorytmu:
-- inicjacja wszystkich potrzebnych semaforów zmiennych warunkowych oraz magazynu
+- inicjalizacja wszystkich potrzebnych semaforów zmiennych warunkowych oraz magazynu
 - stworzenie odpowiedniej liczby wątków producentów produktu a i b oraz stanowisk montażu
 - synchronizacja wątków
 - usunięcie semaforów i zmiennych warunkowych
