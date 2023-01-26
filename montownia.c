@@ -4,10 +4,10 @@
 #include <semaphore.h>
 
 #define REP_SIZE 10
-#define PRODUCTS 10000
-#define PRODUCERS_A 5
-#define PRODUCERS_B 5
-#define CONSUMERS 5
+#define PRODUCTS 1000
+#define PRODUCERS_A 10
+#define PRODUCERS_B 10
+#define CONSUMERS 10
 
 pthread_mutex_t lock;
 sem_t aSpace, bSpace, full, lackOfA, lackOfB;
@@ -70,50 +70,47 @@ void *consumer(void *arg)
     for (int i = 0; i < PRODUCTS; i++)
     {
         sem_wait(&lackOfA);
-        sem_wait(&lackOfB);
-        
-        int k = 2;                              // 2 bo ostatni item firstEmpty - 1
-        pthread_mutex_lock(&lock);
-        if (repository[firstEmpty - 1] == 'a')
-        {
-            repository[firstEmpty - 1] = 'x';   // wyjecie a z magazynu
-            while (repository[firstEmpty - k] != 'b')   // szukanie b
-            {
-                k++;
-            }
-            while (k != 1)
-            {
-                repository[firstEmpty - k] = repository[firstEmpty - k + 1];    // wyjecie b i uporzadkowanie magazynu
-                k--;
-            }
-            
-        }
-        else
-        {
-            repository[firstEmpty - 1] = 'x';   // wyjecie b z magazynu
-            while (repository[firstEmpty - k] != 'a')   // szukanie a
-            {
-                k++;
-            }
-            while (k != 1)
-            {
-                repository[firstEmpty - k] = repository[firstEmpty - k + 1];    // wyjecie a i uporzadkowanie magazynu
-                k--;
-            }
+        int j = 0;
 
+        pthread_mutex_lock(&lock);
+        while (repository[j] != 'a')            // pobranie a z magazynu
+        {
+            j++;
         }
-        
-        
-        firstEmpty -= 2;
+        while (repository[j] < REP_SIZE - 1)    // pobranie a z magazynu
+        {
+            repository[j] = repository[j + 1];
+            j++;
+        }
+        repository[j+1] = 'x';
         aAmount--;
-        bAmount--;
-        produced++;
+        firstEmpty--;
         pthread_mutex_unlock(&lock);
-        printf("Wyprodukowano kolejny produkt, laczna liczba wyprodukowanych: %d\n", produced);
-        sem_post(&full);
+
         sem_post(&full);
         sem_post(&aSpace);
+
+        sem_wait(&lackOfB);
+        pthread_mutex_lock(&lock);
+        while (repository[j] != 'b')            // pobranie a z magazynu
+        {
+            j++;
+        }
+        while (repository[j] < REP_SIZE - 1)    // pobranie a z magazynu
+        {
+            repository[j] = repository[j + 1];
+            j++;
+        }
+        repository[j+1] = 'x';
+        firstEmpty--;
+        bAmount--;
+        pthread_mutex_unlock(&lock);
+
+        sem_post(&full);
         sem_post(&bSpace);
+
+        produced++;
+        printf("Wyprodukowano kolejny produkt, laczna liczba wyprodukowanych: %d\n", produced);
 
     }
     
