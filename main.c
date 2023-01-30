@@ -3,7 +3,7 @@
 #include <pthread.h>
 
 #define REP_SIZE 100
-#define PRODUCTS 1000
+#define PRODUCTS 10000
 #define PRODUCERS_A 5
 #define PRODUCERS_B 5
 #define CONSUMERS 5
@@ -33,7 +33,7 @@ void *producerA(void *arg)
                 pthread_cond_wait(&full, &lock);
                 wait = 1;
             }
-            while (aAmount >= REP_SIZE - 0.05 * REP_SIZE)
+            while (aAmount >= ((REP_SIZE - 0.05 * REP_SIZE) - 2))
             {
                 pthread_cond_wait(&lackOfB, &lock);
                 wait = 1;
@@ -71,7 +71,7 @@ void *producerB(void *arg)
                 pthread_cond_wait(&full, &lock);
                 wait = 1;
             }
-            while (bAmount >= REP_SIZE - 0.05 * REP_SIZE)
+            while (bAmount >= ((REP_SIZE - 0.05 * REP_SIZE) - 2))
             {
                 pthread_cond_wait(&lackOfA, &lock);
                 wait = 1;

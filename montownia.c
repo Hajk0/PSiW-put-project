@@ -5,9 +5,9 @@
 
 #define REP_SIZE 10
 #define PRODUCTS 1000
-#define PRODUCERS_A 10
-#define PRODUCERS_B 10
-#define CONSUMERS 10
+#define PRODUCERS_A 20
+#define PRODUCERS_B 20
+#define CONSUMERS 20
 
 pthread_mutex_t lock;
 sem_t aSpace, bSpace, full, lackOfA, lackOfB;
@@ -77,7 +77,7 @@ void *consumer(void *arg)
         {
             j++;
         }
-        while (repository[j] < REP_SIZE - 1)    // pobranie a z magazynu
+        while (j < REP_SIZE - 1)    // uporzadkowanie magazynu
         {
             repository[j] = repository[j + 1];
             j++;
@@ -90,13 +90,14 @@ void *consumer(void *arg)
         sem_post(&full);
         sem_post(&aSpace);
 
+        j = 0;
         sem_wait(&lackOfB);
         pthread_mutex_lock(&lock);
-        while (repository[j] != 'b')            // pobranie a z magazynu
+        while (repository[j] != 'b')            // pobranie b z magazynu
         {
             j++;
         }
-        while (repository[j] < REP_SIZE - 1)    // pobranie a z magazynu
+        while (j < REP_SIZE - 1)    // uporzadkowanie magazynu
         {
             repository[j] = repository[j + 1];
             j++;
@@ -109,7 +110,7 @@ void *consumer(void *arg)
         sem_post(&full);
         sem_post(&bSpace);
 
-        produced++;
+        produced++;                         // montaz
         printf("Wyprodukowano kolejny produkt, laczna liczba wyprodukowanych: %d\n", produced);
 
     }
@@ -127,7 +128,7 @@ int main(int argc, char **argv)
     sem_init(&lackOfA, 0, 0);
     sem_init(&lackOfB, 0, 0);
 
-    char a = 'a', b = 'b';
+
     for (int i = 0; i < REP_SIZE; i++)
     {
         repository[i] = 'x';
