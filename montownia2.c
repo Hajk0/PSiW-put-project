@@ -9,15 +9,16 @@
 #define PRODUCERS_B 5
 #define CONSUMERS 5
 
-pthread_mutex_t lockEmpty, lockA, lockB;
+pthread_mutex_t lock;
 sem_t aSpace, bSpace, full, lackOfA, lackOfB;
 
 
 char repository[REP_SIZE];
-int firstEmpty = 0, produced = 0;
-int aAmount = 0, bAmount = 0;
+//int firstEmpty = 0, produced = 0;
+int produced = 0;
+//int aAmount = 0, bAmount = 0;
 int empty[REP_SIZE], A[REP_SIZE], B[REP_SIZE];
-int nextEmpty = 0, lastA = 0, lastB = 0;
+int nextEmpty = 0, lastEmpty = 0, lastA = 0, firstA = 0, lastB = 0, firstB = 0;
 
 
 void *producerA(void *arg)
@@ -30,19 +31,15 @@ void *producerA(void *arg)
         sem_wait(&aSpace);                  // aSpace
         sem_wait(&full);                    // full
 
-        pthread_mutex_lock(&lockEmpty);          // lock
+        pthread_mutex_lock(&lock);          // lock
         place = empty[nextEmpty];
         nextEmpty = (nextEmpty + 1) % REP_SIZE;
-        pthread_mutex_unlock(&lockEmpty);
+        A[lastA] = place;//
+        lastA = (lastA + 1) % REP_SIZE;//
+        pthread_mutex_unlock(&lock);
 
         repository[place] = 'a';
         printf("Komponent a dodany\n");
-
-        pthread_mutex_lock(&lockEmpty); //A
-        A[lastA] = place;
-        lastA = (lastA + 1) % REP_SIZE;
-        pthread_mutex_unlock(&lockEmpty); //A
-
 
         sem_post(&lackOfA);                 // lackOfA
     }
@@ -60,21 +57,17 @@ void *producerB(void *arg)
         sem_wait(&bSpace);                  // aSpace
         sem_wait(&full);                    // full
 
-        pthread_mutex_lock(&lockEmpty);          // lock
+        pthread_mutex_lock(&lock);          // lock
         place = empty[nextEmpty];
         nextEmpty = (nextEmpty + 1) % REP_SIZE;
-        pthread_mutex_unlock(&lockEmpty);
+        B[lastB] = place;//
+        lastB = (lastB + 1) % REP_SIZE;//
+        pthread_mutex_unlock(&lock);
 
         repository[place] = 'b';
         printf("Komponent b dodany\n");
 
-        pthread_mutex_lock(&lockEmpty); //B
-        B[lastB] = place;
-        lastA = (lastB + 1) % REP_SIZE;
-        pthread_mutex_unlock(&lockEmpty); //B
-
-
-        sem_post(&lackOfB);                 // lackOfA
+        sem_post(&lackOfB);                 // lackOfB
     }
     
     return NULL;
@@ -87,10 +80,12 @@ void *consumer(void *arg)
     {
         sem_wait(&lackOfA);
 
-        pthread_mutex_lock(&lockEmpty);
-        productA = A[lastA];
-        lastA = (lastA + 1) % REP_SIZE;
-        pthread_mutex_unlock(&lockEmpty);
+        pthread_mutex_lock(&lock);
+        productA = A[firstA];
+        firstA = (firstA + 1) % REP_SIZE;
+        empty[lastEmpty] = productA;//
+        lastEmpty = (lastEmpty + 1) % REP_SIZE;//
+        pthread_mutex_unlock(&lock);
 
         sem_post(&full);
         sem_post(&aSpace);
@@ -98,10 +93,12 @@ void *consumer(void *arg)
 
         sem_wait(&lackOfB);
         
-        pthread_mutex_lock(&lockEmpty);
-        productB = B[lastB];
-        lastB = (lastB + 1) % REP_SIZE;
-        pthread_mutex_unlock(&lockEmpty);
+        pthread_mutex_lock(&lock);
+        productB = B[firstB];
+        firstB = (firstB + 1) % REP_SIZE;
+        empty[lastEmpty] = productB;
+        lastEmpty = (lastEmpty + 1) % REP_SIZE;
+        pthread_mutex_unlock(&lock);
 
         sem_post(&full);
         sem_post(&bSpace);
@@ -119,9 +116,7 @@ void *consumer(void *arg)
 int main(int argc, char **argv)
 {
     pthread_t producersA[PRODUCERS_A], producersB[PRODUCERS_B], consumers[CONSUMERS];
-    pthread_mutex_init(&lockEmpty, NULL);
-    pthread_mutex_init(&lockA, NULL);
-    pthread_mutex_init(&lockB, NULL);
+    pthread_mutex_init(&lock, NULL);
     sem_init(&aSpace, 0, REP_SIZE - 1);
     sem_init(&bSpace, 0, REP_SIZE - 1);
     sem_init(&full, 0, REP_SIZE);
@@ -164,9 +159,7 @@ int main(int argc, char **argv)
     }
 
 
-    pthread_mutex_destroy(&lockEmpty);
-    pthread_mutex_destroy(&lockA);
-    pthread_mutex_destroy(&lockB);
+    pthread_mutex_destroy(&lock);
     sem_destroy(&aSpace);
     sem_destroy(&bSpace);
     sem_destroy(&full);
