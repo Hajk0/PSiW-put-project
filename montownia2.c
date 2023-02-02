@@ -34,11 +34,16 @@ void *producerA(void *arg)
         pthread_mutex_lock(&lock);          // lock
         place = empty[nextEmpty];
         nextEmpty = (nextEmpty + 1) % REP_SIZE;
+        pthread_mutex_unlock(&lock);///
+
+        repository[place] = 'a';
+
+        pthread_mutex_lock(&lock);///
         A[lastA] = place;//
         lastA = (lastA + 1) % REP_SIZE;//
         pthread_mutex_unlock(&lock);
 
-        repository[place] = 'a';
+        //repository[place] = 'a';
         printf("Komponent a dodany\n");
 
         sem_post(&lackOfA);                 // lackOfA
@@ -60,11 +65,16 @@ void *producerB(void *arg)
         pthread_mutex_lock(&lock);          // lock
         place = empty[nextEmpty];
         nextEmpty = (nextEmpty + 1) % REP_SIZE;
+        pthread_mutex_unlock(&lock);///
+
+        repository[place] = 'b';
+
+        pthread_mutex_lock(&lock);///
         B[lastB] = place;//
         lastB = (lastB + 1) % REP_SIZE;//
         pthread_mutex_unlock(&lock);
 
-        repository[place] = 'b';
+        //repository[place] = 'b';
         printf("Komponent b dodany\n");
 
         sem_post(&lackOfB);                 // lackOfB
@@ -83,6 +93,11 @@ void *consumer(void *arg)
         pthread_mutex_lock(&lock);
         productA = A[firstA];
         firstA = (firstA + 1) % REP_SIZE;
+        pthread_mutex_unlock(&lock);
+
+        repository[productA] = 'x';
+
+        pthread_mutex_lock(&lock);
         empty[lastEmpty] = productA;//
         lastEmpty = (lastEmpty + 1) % REP_SIZE;//
         pthread_mutex_unlock(&lock);
@@ -96,6 +111,11 @@ void *consumer(void *arg)
         pthread_mutex_lock(&lock);
         productB = B[firstB];
         firstB = (firstB + 1) % REP_SIZE;
+        pthread_mutex_unlock(&lock);
+
+        repository[productB] = 'x';
+
+        pthread_mutex_lock(&lock);
         empty[lastEmpty] = productB;
         lastEmpty = (lastEmpty + 1) % REP_SIZE;
         pthread_mutex_unlock(&lock);
@@ -103,8 +123,8 @@ void *consumer(void *arg)
         sem_post(&full);
         sem_post(&bSpace);
 
-        repository[productA] = 'x';
-        repository[productB] = 'x';
+        //repository[productA] = 'x';
+        //repository[productB] = 'x';
         produced++;                         // montaz
         printf("Wyprodukowano kolejny produkt, laczna liczba wyprodukowanych: %d\n", produced);
 

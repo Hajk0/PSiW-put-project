@@ -44,3 +44,40 @@ wszystkie one mogą pracować jednocześnie.
 - - CONSUMERS - liczba stanowisk montażu,
 
 (zaleca się podanie tej samej liczby trzech ostatnich stałych aby program wykonał się do końca, w przeciwnym wypadku konsument będzie czekał na komponenty których nie dostanie lub producent będzie czekał na wyczyszczenie magazynu którego nie będzie miał kto wyczyścić)
+
+## Zapis algorytmu
+
+producerA()
+- p(aSpace)
+- p(full)
+- p(lock)
+- pobranie pierwszego wolnego miejsca
+- v(lock)
+- dodanie do magazynu
+- p(lock)
+- dodanie zajętego miejsca do kolejki zajmowanych indeksów
+- v(lock)
+- v(lackOfa)
+
+consumer()
+- p(lackOfA)
+- p(lock)
+- pobranie indeksu a z kolejki
+- v(lock)
+- pobranie a z magazynu
+- p(lock)
+- dodanie zwolnionego miejsca do kolejki wolnych indeksów
+- v(lock)
+- v(full)
+- v(aSpace)
+- p(lackOfB)
+- p(lock)
+- pobranie indeksu b z kolejki
+- v(lock)
+- pobranie b z magazynu
+- p(lock)
+- dodanie zwolnionego miejsca do kolejki wolnych indeksów
+- v(lock)
+- v(full)
+- v(bSpace)
+- montaż
