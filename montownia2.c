@@ -10,7 +10,7 @@
 #define CONSUMERS 5
 
 pthread_mutex_t lock;
-sem_t aSpace, bSpace, full, lackOfA, lackOfB;
+sem_t aSpace, bSpace, full, lackOfA, lackOfB, bufSemA;
 
 
 char repository[REP_SIZE];
@@ -122,6 +122,7 @@ int main(int argc, char **argv)
     sem_init(&full, 0, REP_SIZE);
     sem_init(&lackOfA, 0, 0);
     sem_init(&lackOfB, 0, 0);
+    sem_init(&bufSemA, 0, REP_SIZE);
 
 
     for (int i = 0; i < REP_SIZE; i++)
